@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0F172A;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #1E293B;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tab {
+      padding: 8px 12px;
+      background: #334155;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #3B82F6;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .save {
+      background: #22C55E;
+      color: white;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      background: #020617;
+      color: #E2E8F0;
+      border: none;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="tabs" id="tabs"></div>
+    <button class="btn save" onclick="saveFile()">Save</button>
+  </header>
+
+  <textarea id="editor"></textarea>
+
+  <script>
+    const SUPABASE_URL = "https://wxmxolutfcrcwboaoacx.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bXhvbHV0ZmNyY3dib2FvYWN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzYxOTUsImV4cCI6MjA5MDQ1MjE5NX0.CeBDsGFs_i3iDQuQMWvDyi6FEkLbIO4jokbRSAC7N_o";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder_id");
+
+    let files = [];
+    let currentFile = null;
+
+    // 🔷 Check login
+    async function checkUser() {
+      const { data } = await supabaseClient.auth.getSession();
+      if (!data.session) {
+        window.location.href = "auth.html";
+      }
+    }
+
+    // 🔷 Load files
+    async function loadFiles() {
+      const { data, error } = await supabaseClient
+        .from("files")
+        .select("*")
+        .eq("folder_id", folderId);
+
+      if (!error) {
+        files = data;
+        renderTabs();
+
+        if (files.length > 0) {
+          openFile(files[0].id);
+        }
+      }
+    }
+
+    // 🔷 Render tabs
+    function renderTabs() {
+      const tabContainer = document.getElementById("tabs");
+      tabContainer.innerHTML = "";
+
+      files.forEach(file => {
+        const tab = document.createElement("div");
+        tab.className = "tab";
+        tab.innerText = file.name;
+
+        tab.onclick = () => openFile(file.id);
+
+        if (currentFile && currentFile.id === file.id) {
+          tab.classList.add("active");
+        }
+
+        tabContainer.appendChild(tab);
+      });
+    }
+
+    // 🔷 Open file
+    function openFile(id) {
+      currentFile = files.find(f => f.id === id);
+
+      document.getElementById("editor").value = currentFile.content;
+
+      renderTabs();
+    }
+
+    // 🔷 Save file
+    async function saveFile() {
+      const content = document.getElementById("editor").value;
+
+      const { error } = await supabaseClient
+        .from("files")
+        .update({ content: content })
+        .eq("id", currentFile.id);
+
+      if (!error) {
+        alert("Saved!");
+      } else {
+        alert("Error saving file");
+      }
+    }
+
+    // 🔷 Auto-save (every 5 sec)
+    setInterval(() => {
+      if (currentFile) {
+        saveFile();
+      }
+    }, 5000);
+
+    // 🔷 Init
+    checkUser();
+    loadFiles();
+  </script>
+
+</body>
+</html>

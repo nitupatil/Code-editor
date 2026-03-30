@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Preview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0F172A;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #1E293B;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #3B82F6;
+      color: white;
+    }
+
+    iframe {
+      flex: 1;
+      border: none;
+      background: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h3>Live Preview</h3>
+    <button class="btn" onclick="loadPreview()">🔄 Refresh</button>
+  </header>
+
+  <iframe id="previewFrame"></iframe>
+
+  <script>
+    const SUPABASE_URL = "https://wxmxolutfcrcwboaoacx.supabase.co";
+    const SUPABASE_ANON_KEY = "PASTE_YOUR_KEY_HERE";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder_id");
+
+    // 🔷 Load and render preview
+    async function loadPreview() {
+      if (!folderId) {
+        alert("No folder selected");
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("files")
+        .select("*")
+        .eq("folder_id", folderId);
+
+      if (error) {
+        alert("Error loading files");
+        return;
+      }
+
+      const html = data.find(f => f.type === "html")?.content || "";
+      const css = data.find(f => f.type === "css")?.content || "";
+      const js = data.find(f => f.type === "js")?.content || "";
+
+      const fullCode = `
+        <html>
+        <head>
+          <style>${css}</style>
+        </head>
+        <body>
+          ${html}
+          <script>${js}<\/script>
+        </body>
+        </html>
+      `;
+
+      document.getElementById("previewFrame").srcdoc = fullCode;
+    }
+
+    // 🔷 Initial load
+    loadPreview();
+  </script>
+
+</body>
+</html>

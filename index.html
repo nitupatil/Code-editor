@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cloud Web IDE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0F172A;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #94A3B8;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .login {
+      background: #3B82F6;
+      color: white;
+    }
+
+    .signup {
+      background: transparent;
+      border: 1px solid #3B82F6;
+      color: #3B82F6;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Cloud Web IDE</h1>
+    <p>Create, edit and share HTML, CSS & JS projects directly from your browser.</p>
+
+    <button class="btn login" onclick="goToAuth()">Login</button>
+    <button class="btn signup" onclick="goToAuth()">Sign Up</button>
+  </div>
+
+  <script>
+    // 🔷 Supabase Config
+    const SUPABASE_URL = "https://wxmxolutfcrcwboaoacx.supabase.co";
+
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bXhvbHV0ZmNyY3dib2FvYWN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzYxOTUsImV4cCI6MjA5MDQ1MjE5NX0.CeBDsGFs_i3iDQuQMWvDyi6FEkLbIO4jokbRSAC7N_o";
+
+    // ✅ IMPORTANT: use different variable name
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 🔷 Redirect if already logged in
+    async function checkUser() {
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (data.session) {
+        window.location.href = "dashboard.html";
+      }
+    }
+
+    // 🔷 Go to auth page
+    function goToAuth() {
+      window.location.href = "auth.html";
+    }
+
+    // 🔷 Run on load
+    checkUser();
+  </script>
+
+</body>
+</html>
