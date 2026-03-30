@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Share Project</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0F172A;
+      color: white;
+    }
+
+    header {
+      padding: 15px;
+      background: #1E293B;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    select, button {
+      padding: 10px;
+      margin-right: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .btn {
+      background: #3B82F6;
+      color: white;
+      cursor: pointer;
+    }
+
+    .card {
+      background: #1E293B;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .link {
+      color: #22C55E;
+      word-break: break-all;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h3>Share Project</h3>
+    <button onclick="goBack()">Back</button>
+  </header>
+
+  <div class="container">
+
+    <h4>Create Share Link</h4>
+
+    <select id="accessType">
+      <option value="view">View Only</option>
+      <option value="edit">Edit Access</option>
+    </select>
+
+    <button class="btn" onclick="createShare()">Generate Link</button>
+
+    <h4 style="margin-top:30px;">Shared Links</h4>
+    <div id="shareList"></div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://wxmxolutfcrcwboaoacx.supabase.co";
+    const SUPABASE_ANON_KEY = "PASTE_YOUR_KEY_HERE";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder_id");
+
+    // 🔷 Create share link
+    async function createShare() {
+      const accessType = document.getElementById("accessType").value;
+
+      const token = Math.random().toString(36).substring(2, 10);
+
+      const user = (await supabaseClient.auth.getUser()).data.user;
+
+      const { error } = await supabaseClient.from("shares").insert([
+        {
+          folder_id: folderId,
+          share_token: token,
+          access_type: accessType,
+          created_by: user.id
+        }
+      ]);
+
+      if (!error) {
+        loadShares();
+      } else {
+        alert("Error creating share link");
+      }
+    }
+
+    // 🔷 Load share links
+    async function loadShares() {
+      const { data } = await supabaseClient
+        .from("shares")
+        .select("*")
+        .eq("folder_id", folderId);
+
+      const container = document.getElementById("shareList");
+      container.innerHTML = "";
+
+      data.forEach(share => {
+        const url = window.location.origin + "/view.html?token=" + share.share_token;
+
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+          <div><b>Access:</b> ${share.access_type}</div>
+          <div class="link">${url}</div>
+          <button onclick="copyLink('${url}')">Copy</button>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    // 🔷 Copy link
+    function copyLink(url) {
+      navigator.clipboard.writeText(url);
+      alert("Copied!");
+    }
+
+    // 🔷 Back
+    function goBack() {
+      window.location.href = "folder.html?folder_id=" + folderId;
+    }
+
+    // 🔷 Init
+    loadShares();
+  </script>
+
+</body>
+</html>
